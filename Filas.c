@@ -1,64 +1,142 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_QUEUE_SIZE 6
-
+// Estructura para representar un cliente
 typedef struct {
-    int items[MAX_QUEUE_SIZE];
-    int front, rear;
-} Queue;
+    int numeroCuenta;
+    int tipoCuenta; // 1 para preferencial, 2 para tradicional
+} Cliente;
 
-void initQueue(Queue *q) {
-    q->front = -1;
-    q->rear = -1;
+// Estructura para representar un nodo de la fila
+typedef struct Nodo {
+    Cliente cliente;
+    struct Nodo* siguiente;
+} Nodo;
+
+// Estructura para representar una fila de clientes
+typedef struct {
+    Nodo* frente;
+    Nodo* final;
+} Cola;
+
+// Inicializar una fila vacía
+void inicializarCola(Cola* cola) {
+    cola->frente = NULL;
+    cola->final = NULL;
 }
 
-int isFull(Queue *q) {
-    return (q->rear == MAX_QUEUE_SIZE - 1);
+// Verificar si la fila está vacía
+int colaVacia(Cola* cola) {
+    return (cola->frente == NULL);
 }
 
-int isEmpty(Queue *q) {
-    return (q->front == -1 || q->front > q->rear);
-}
+// Añadir un cliente a la fila
+void encolar(Cola* cola, Cliente cliente) {
+    Nodo* nuevoNodo = (Nodo*)malloc(sizeof(Nodo));
+    if (nuevoNodo == NULL) {
+        printf("Error de asignacion de memoria\n");
+        exit(1);
+    }
+    nuevoNodo->cliente = cliente;
+    nuevoNodo->siguiente = NULL;
 
-void enqueue(Queue *q, int value) {
-    if (!isFull(q)) {
-        if (q->front == -1) {
-            q->front = 0;
-        }
-        q->rear++;
-        q->items[q->rear] = value;
-        printf("Cliente %d se ha unido a la fila\n", value);
+    if (colaVacia(cola)) {
+        cola->frente = nuevoNodo;
+        cola->final = nuevoNodo;
     } else {
-        printf("La fila está llena, el cliente %d no puede unirse\n", value);
+        cola->final->siguiente = nuevoNodo;
+        cola->final = nuevoNodo;
     }
 }
 
-int dequeue(Queue *q) {
-    if (!isEmpty(q)) {
-        int item = q->items[q->front];
-        q->front++;
-        printf("Cliente %d ha sido atendido\n", item);
-        return item;
-    } else {
-        printf("La fila está vacía\n");
-        return -1;
+// Remover y obtener el primer cliente de la fila
+Cliente desencolar(Cola* cola) {
+    if (colaVacia(cola)) {
+        printf("Cola vacia\n");
+        exit(1);
+    }
+
+    Nodo* temp = cola->frente;
+    Cliente cliente = temp->cliente;
+
+    cola->frente = temp->siguiente;
+    free(temp);
+
+    if (cola->frente == NULL) {
+        cola->final = NULL; // La fila está vacía
+    }
+
+    return cliente;
+}
+
+// Visualizar los clientes presentes en la fila
+void mostrarCola(Cola* cola) {
+    if (colaVacia(cola)) {
+        printf("La cola esta vacia\n");
+        return;
+    }
+
+    printf("Clientes en la cola:\n");
+    
+    Nodo* actual = cola->frente;
+    
+    while (actual != NULL) {
+        printf("Numero de Cuenta: %d, Tipo de Cuenta: %s\n", actual->cliente.numeroCuenta, 
+               (actual->cliente.tipoCuenta == 1) ? "Preferencial" : "Tradicional");
+        actual = actual->siguiente;
     }
 }
 
 int main() {
-    Queue regularQueue;
-    initQueue(&regularQueue);
+    Cola colaPreferencial, colaTradicional;
+    Cliente cliente1, cliente2;
 
-    enqueue(&regularQueue, 101); // Cliente 101 se une a la fila
-    enqueue(&regularQueue, 102); // Cliente 102 se une a la fila
-    enqueue(&regularQueue, 103); // Cliente 103 se une a la fila
-    enqueue(&regularQueue, 104); // Cliente 104 se une a la fila
-    enqueue(&regularQueue, 105); // Cliente 105 se une a la fila
-    enqueue(&regularQueue, 106); // Cliente 106 se une a la fila
+    inicializarCola(&colaPreferencial);
+    inicializarCola(&colaTradicional);
 
-    dequeue(&regularQueue); // Atender al próximo cliente
+    int eleccion;
+    do {
+        printf("\nSistema de Gestion de Colas Bancarias\n");
+        printf("1. Agregar cliente preferencial\n");
+        printf("2. Agregar cliente tradicional\n");
+        printf("3. Mostrar cola preferencial\n");
+        printf("4. Mostrar cola tradicional\n");
+        printf("5. Salir\n");
+        printf("Ingrese su eleccion: ");
+        scanf("%d", &eleccion);
+
+        switch (eleccion) {
+            case 1:
+                printf("Ingrese el numero de cuenta del cliente preferencial: ");
+                scanf("%d", &cliente1.numeroCuenta);
+                cliente1.tipoCuenta = 1;
+                encolar(&colaPreferencial, cliente1);
+                printf("Cliente preferencial agregado a la cola\n");
+                break;
+            case 2:
+                printf("Ingrese el numero de cuenta del cliente tradicional: ");
+                scanf("%d", &cliente2.numeroCuenta);
+                cliente2.tipoCuenta = 2;
+                encolar(&colaTradicional, cliente2);
+                printf("Cliente tradicional agregado a la cola\n");
+                break;
+            case 3:
+                printf("Cola Preferencial:\n");
+                mostrarCola(&colaPreferencial);
+                break;
+            case 4:
+                printf("Cola Tradicional:\n");
+                mostrarCola(&colaTradicional);
+                break;
+            case 5:
+                printf("Saliendo...\n");
+                break;
+            default:
+                printf("Opcion invalida\n");
+        }
+    } while (eleccion != 5);
 
     return 0;
 }
+
 
